@@ -3,63 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sketch AI - النسخة المضمونة 100%</title>
+    <title>Sketch AI - النسخة النهائية المضمونة</title>
     <style>
-        body { background: #121212; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; }
-        .box { background: #1e1e1e; padding: 20px; border-radius: 15px; border: 1px solid #333; display: inline-block; }
-        canvas { background: white; border-radius: 10px; cursor: crosshair; touch-action: none; width: 400px; height: 400px; }
-        button { padding: 15px 30px; border-radius: 8px; border: none; background: #00d2ff; color: black; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
+        body { background: #121212; color: white; font-family: sans-serif; text-align: center; padding: 20px; }
+        .card { background: #1e1e1e; padding: 20px; border-radius: 15px; border: 1px solid #333; display: inline-block; max-width: 90%; }
+        canvas { background: white; border-radius: 10px; cursor: crosshair; touch-action: none; width: 400px; height: 400px; border: 3px solid #444; }
+        button { padding: 15px; border-radius: 8px; border: none; background: #00d2ff; color: black; font-weight: bold; cursor: pointer; margin: 5px; width: 100%; max-width: 200px; }
         #resImg { width: 400px; height: 400px; border-radius: 10px; display: none; margin-top: 20px; border: 2px solid #00d2ff; }
-        .loader { display: none; border: 4px solid #222; border-top: 4px solid #00d2ff; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 10px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        input[type="text"] { width: 80%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; background: #000; color: white; text-align: center; }
     </style>
 </head>
 <body>
 
-<h1>مُحول السكتشات 🎨</h1>
+<h1>محول الرسومات الذكي ✨</h1>
 
-<div class="box">
+<div class="card">
     <canvas id="c" width="512" height="512"></canvas>
     <br>
-    <button onclick="clearC()" style="background:#ff4444; color:white;">مسح اللوحة</button>
-    <button onclick="document.getElementById('f').click()" style="background:#555; color:white;">رفع سكتش 📁</button>
+    <button onclick="clearC()" style="background:#ff4444; color:white">مسح اللوحة</button>
+    <button onclick="document.getElementById('f').click()" style="background:#555; color:white">رفع سكتش 📁</button>
     <input type="file" id="f" hidden accept="image/*">
     
-    <hr style="border:0; border-top:1px solid #333; margin:20px 0;">
+    <hr style="border-color:#333; margin:20px 0;">
     
-    <input type="text" id="p" placeholder="وصف السكتش (مثلاً: house)" style="width:90%; padding:10px; border-radius:5px; border:none; margin-bottom:10px;">
-    <button id="go">تحويل السكتش الآن ✨</button>
+    <input type="text" id="p" placeholder="اكتب وصفاً للرسمة هنا...">
+    <br>
+    <button id="go" style="background:#00d2ff; width:90%; max-width:none; font-size:1.1rem;">تحويل الرسمة الآن 🚀</button>
     
-    <div class="loader" id="ld"></div>
-    <p id="st"></p>
-    
+    <p id="st" style="color:#00d2ff; margin-top:10px;"></p>
     <img id="resImg">
 </div>
 
 <script>
     const c = document.getElementById('c'), ctx = c.getContext('2d');
-    const resImg = document.getElementById('resImg'), st = document.getElementById('st'), ld = document.getElementById('ld');
+    const resImg = document.getElementById('resImg'), st = document.getElementById('st');
 
+    // إعداد اللوحة
     ctx.fillStyle = "white"; ctx.fillRect(0,0,512,512);
-    ctx.strokeStyle = "black"; ctx.lineWidth = 5; ctx.lineCap = "round";
+    ctx.strokeStyle = "black"; ctx.lineWidth = 6; ctx.lineCap = "round";
 
     let draw = false;
-    // دعم الماوس واللمس (Samsung A12)
     const getPos = (e) => {
         const r = c.getBoundingClientRect();
         const clientX = e.clientX || (e.touches && e.touches[0].clientX);
         const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-        return { x: clientX - r.left, y: clientY - r.top };
+        return { x: (clientX - r.left) * (c.width / r.width), y: (clientY - r.top) * (c.height / r.height) };
     };
 
-    const start = (e) => { draw = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); };
-    const move = (e) => { if(!draw) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); };
-    const stop = () => draw = false;
+    c.onmousedown = (e) => { draw = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); };
+    window.onmouseup = () => draw = false;
+    c.onmousemove = (e) => { if(!draw) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
 
-    c.onmousedown = start; window.onmouseup = stop; c.onmousemove = move;
-    c.ontouchstart = start; c.ontouchend = stop; c.ontouchmove = move;
+    // دعم اللمس للموبايل
+    c.ontouchstart = (e) => { draw = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); e.preventDefault(); };
+    c.ontouchend = () => draw = false;
+    c.ontouchmove = (e) => { if(!draw) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); };
 
-    window.clearC = () => { ctx.fillRect(0,0,512,512); resImg.style.display="none"; st.innerText=""; };
+    window.clearC = () => { ctx.fillStyle="white"; ctx.fillRect(0,0,512,512); resImg.style.display="none"; st.innerText=""; };
 
     document.getElementById('f').onchange = (e) => {
         const reader = new FileReader();
@@ -72,26 +72,23 @@
     };
 
     document.getElementById('go').onclick = () => {
-        const prompt = document.getElementById('p').value || "masterpiece";
-        st.innerText = "جاري التوليد... انتظر ثواني";
-        ld.style.display = "block";
+        const promptText = document.getElementById('p').value || "highly detailed masterpiece";
+        st.innerText = "⏳ جاري التوليد... انتظر 5 ثواني";
         
         const seed = Math.floor(Math.random() * 1000000);
-        // نستخدم رابطاً مباشراً جداً يعامل كصورة عادية
-        const url = `https://pollinations.ai/p/${encodeURIComponent(prompt)}?width=512&height=512&seed=${seed}`;
+        // الرابط المباشر للصورة (وليس الصفحة الرئيسية)
+        const finalUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=512&height=512&seed=${seed}&nologo=true`;
 
-        // محاولة عرض الصورة
-        resImg.src = url;
-        resImg.onload = () => {
-            resImg.style.display = "block";
-            ld.style.display = "none";
-            st.innerText = "✅ تمت العملية!";
-        };
+        resImg.src = finalUrl;
+        resImg.style.display = "block";
         
-        // إذا فشل العرض المباشر، سنفتح الرابط في نافذة جديدة كحل أخير
+        resImg.onload = () => {
+            st.innerText = "✅ اكتمل التحويل!";
+            window.scrollTo(0, document.body.scrollHeight);
+        };
+
         resImg.onerror = () => {
-            ld.style.display = "none";
-            st.innerHTML = `⚠️ المتصفح يحجب الصورة، <a href="${url}" target="_blank" style="color:#00d2ff">اضغط هنا لرؤيتها في نافذة جديدة</a>`;
+            st.innerHTML = `⚠️ المتصفح يحجب العرض المباشر. <br> <a href="${finalUrl}" target="_blank" style="color:#00d2ff; font-weight:bold; font-size:1.2rem;">اضغط هنا لفتح النتيجة في صفحة جديدة</a>`;
         };
     };
 </script>
