@@ -3,155 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sketch AI - المصمم الذكي</title>
+    <title>Sketch AI - المكتشف التلقائي</title>
     <style>
-        :root { --primary: #00d2ff; --bg: #121212; }
+        :root { --primary: #00d2ff; --bg: #0a0a0a; }
         body { background: var(--bg); color: white; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .nav { background: #1a1a1a; width: 100%; text-align: center; padding: 15px; border-bottom: 2px solid var(--primary); margin-bottom: 20px; }
-        .main-container { display: flex; gap: 25px; padding: 20px; flex-wrap: wrap; justify-content: center; max-width: 1300px; }
-        .card { background: #1e1e1e; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        canvas { background: white; border-radius: 10px; cursor: crosshair; touch-action: none; width: 450px; height: 450px; border: 3px solid #333; }
-        .controls { width: 320px; display: flex; flex-direction: column; gap: 15px; justify-content: center; }
-        input[type="text"] { padding: 12px; border-radius: 8px; border: 1px solid #333; background: #000; color: white; text-align: center; }
-        button { padding: 12px; border-radius: 8px; border: none; background: var(--primary); color: black; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { transform: scale(1.03); filter: brightness(1.1); }
-        .btn-red { background: #ff4444; color: white; }
-        #status { font-size: 14px; color: #888; text-align: center; margin-top: 10px; }
-        .loader { display: none; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: auto; }
+        .header { background: #111; width: 100%; text-align: center; padding: 15px; border-bottom: 2px solid var(--primary); }
+        .main { display: flex; gap: 20px; padding: 20px; flex-wrap: wrap; justify-content: center; }
+        .card { background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; }
+        canvas { background: white; border-radius: 10px; cursor: crosshair; touch-action: none; width: 480px; height: 480px; }
+        .controls { width: 300px; display: flex; flex-direction: column; gap: 15px; justify-content: center; }
+        button { padding: 15px; border-radius: 8px; border: none; background: var(--primary); color: black; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { transform: scale(1.02); filter: brightness(1.1); }
+        .btn-upload { background: #444; color: white; }
+        .btn-clear { background: #ff4444; color: white; }
+        #status { font-size: 14px; color: var(--primary); text-align: center; margin-top: 10px; }
+        .loader { display: none; border: 4px solid #222; border-top: 4px solid var(--primary); border-radius: 50%; width: 35px; height: 35px; animation: spin 1s linear infinite; margin: auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div class="nav">
-    <h1>الذكاء الاصطناعي للمعماريين والمصممين 🏗️</h1>
+<div class="header">
+    <h1>مُحول السكتشات الذكي 🚀</h1>
+    <p>ارسم، ارفع سكتش، ودع الذكاء الاصطناعي يتخيل الباقي!</p>
 </div>
 
-<div class="main-container">
+<div class="main">
     <div class="card">
-        <h3 style="text-align:center">لوحة السكتش</h3>
+        <h3 style="text-align:center">لوحة الرسم / الرفع</h3>
         <canvas id="canvas" width="512" height="512"></canvas>
-        <div style="margin-top:15px; display:flex; gap:10px">
-            <button class="btn-red" onclick="clearCanvas()">مسح الكل</button>
-            <button onclick="document.getElementById('fileInput').click()">رفع سكتش 📁</button>
+        <div style="margin-top:10px; display:flex; gap:10px">
+            <button class="btn-clear" onclick="clearCanvas()">مسح</button>
+            <button class="btn-upload" onclick="document.getElementById('fileInput').click()">رفع سكتش 📁</button>
             <input type="file" id="fileInput" hidden accept="image/*">
         </div>
     </div>
 
     <div class="controls">
-        <label>وصف التصميم (بالانجليزية):</label>
-        <input type="text" id="promptInput" placeholder="مثلاً: Modern luxury villa, exterior, 8k">
+        <p style="text-align:center; color:#888;">يمكنك كتابة وصف بسيط أو ترك المربع فارغاً ليعتمد المحرك على خياله الخاص.</p>
+        <input type="text" id="promptInput" placeholder="وصف اختياري..." style="padding:12px; border-radius:8px; border:none; background:#000; color:white;">
         
-        <button id="genBtn" style="font-size: 1.1rem; height: 60px;">تحويل السكتش إلى واقع ✨</button>
+        <button id="genBtn">حوّل السكتش لواقع ✨</button>
         
         <div class="loader" id="loader"></div>
-        <p id="status">جاهز للإبداع..</p>
+        <p id="status">جاهز لاستلام سكتش جديد..</p>
     </div>
 
     <div class="card">
-        <h3 style="text-align:center">الرؤية الواقعية</h3>
+        <h3 style="text-align:center">النتيجة الواقعية</h3>
         <canvas id="outCanvas" width="512" height="512"></canvas>
-        <button id="saveBtn" style="margin-top:15px; width:100%; display:none; background:#4CAF50; color:white">حفظ الصورة النهائية</button>
     </div>
 </div>
 
 <script>
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const outCanvas = document.getElementById('outCanvas');
-    const oCtx = outCanvas.getContext('2d');
-    const status = document.getElementById('status');
-    const loader = document.getElementById('loader');
+    const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
+    const outCanvas = document.getElementById('outCanvas'), oCtx = outCanvas.getContext('2d');
+    const status = document.getElementById('status'), loader = document.getElementById('loader');
 
-    // إعدادات الرسم الافتراضية
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, 512, 512);
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 4;
-    ctx.lineCap = "round";
+    // إعداد اللوحة
+    ctx.fillStyle = "white"; ctx.fillRect(0, 0, 512, 512);
+    ctx.strokeStyle = "black"; ctx.lineWidth = 5; ctx.lineCap = "round";
 
     let drawing = false;
-
-    // --- وظائف الرسم بالماوس واللمس ---
-    function startDraw(e) { drawing = true; ctx.beginPath(); draw(e); }
-    function endDraw() { drawing = false; ctx.beginPath(); }
+    function start(e) { drawing = true; ctx.beginPath(); draw(e); }
+    function end() { drawing = false; }
     function draw(e) {
         if (!drawing) return;
         const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX || e.touches[0].clientX) - rect.left;
-        const y = (e.clientY || e.touches[0].clientY) - rect.top;
-        ctx.lineTo(x, y);
-        ctx.stroke();
+        const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+        const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+        ctx.lineTo(x, y); ctx.stroke();
     }
 
-    canvas.onmousedown = startDraw;
-    window.onmouseup = endDraw;
-    canvas.onmousemove = draw;
-    canvas.ontouchstart = startDraw;
-    canvas.ontouchend = endDraw;
-    canvas.ontouchmove = draw;
+    canvas.onmousedown = start; window.onmouseup = end; canvas.onmousemove = draw;
+    canvas.addEventListener('touchstart', start); canvas.addEventListener('touchend', end); canvas.addEventListener('touchmove', draw);
 
-    function clearCanvas() {
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, 512, 512);
-        oCtx.clearRect(0, 0, 512, 512);
-        document.getElementById('saveBtn').style.display = 'none';
-        status.innerText = "تم مسح اللوحة";
-    }
+    function clearCanvas() { ctx.fillStyle = "white"; ctx.fillRect(0,0,512,512); oCtx.clearRect(0,0,512,512); }
 
-    // --- وظيفة رفع الصورة ---
-    document.getElementById('fileInput').onchange = function(e) {
+    // --- وظيفة الرفع (مهمة جداً لك) ---
+    document.getElementById('fileInput').onchange = (e) => {
         const reader = new FileReader();
-        reader.onload = function(event) {
+        reader.onload = (ev) => {
             const img = new Image();
-            img.onload = function() {
+            img.onload = () => {
                 ctx.fillStyle = "white";
                 ctx.fillRect(0, 0, 512, 512);
                 ctx.drawImage(img, 0, 0, 512, 512);
-                status.innerText = "✅ تم رفع السكتش بنجاح";
-            }
-            img.src = event.target.result;
-        }
+                status.innerText = "✅ تم رفع السكتش بنجاح!";
+            };
+            img.src = ev.target.result;
+        };
         reader.readAsDataURL(e.target.files[0]);
     };
 
-    // --- محرك الذكاء الاصطناعي (API) ---
+    // --- محرك التحويل ---
     document.getElementById('genBtn').onclick = async () => {
-        const prompt = document.getElementById('promptInput').value;
-        if(!prompt) return alert("من فضلك اكتب وصفاً للتصميم أولاً");
+        let prompt = document.getElementById('promptInput').value;
+        // إذا كان المربع فارغاً، نستخدم وصفاً ذكياً عاماً
+        if(!prompt) prompt = "a masterpiece, highly detailed, realistic interpretation of this sketch";
 
-        status.innerText = "🚀 جاري المعالجة السحابية...";
+        status.innerText = "🚀 جاري قراءة السكتش وتخيله...";
         loader.style.display = "block";
-        document.getElementById('genBtn').disabled = true;
-
+        
         try {
-            // نستخدم محرك Pollinations السريع والمفتوح
-            const seed = Math.floor(Math.random() * 1000000);
-            const imageUrl = `https://pollinations.ai/p/${encodeURIComponent(prompt)}?width=512&height=512&seed=${seed}&nologo=true`;
+            const seed = Math.floor(Math.random() * 999999);
+            const encodedPrompt = encodeURIComponent(prompt);
+            const imageUrl = `https://pollinations.ai/p/${encodedPrompt}?width=512&height=512&seed=${seed}&nologo=true`;
 
             const img = new Image();
             img.crossOrigin = "anonymous";
             img.onload = function() {
                 oCtx.drawImage(img, 0, 0, 512, 512);
-                status.innerText = "✅ اكتمل التصميم!";
+                status.innerText = "✅ اكتمل التحويل!";
                 loader.style.display = "none";
-                document.getElementById('genBtn').disabled = false;
-                document.getElementById('saveBtn').style.display = 'block';
             };
             img.src = imageUrl;
-
         } catch (err) {
             status.innerText = "❌ حدث خطأ، حاول مرة أخرى";
             loader.style.display = "none";
-            document.getElementById('genBtn').disabled = false;
         }
-    };
-
-    document.getElementById('saveBtn').onclick = () => {
-        const link = document.createElement('a');
-        link.download = 'my-design.png';
-        link.href = outCanvas.toDataURL();
-        link.click();
     };
 </script>
 </body>
