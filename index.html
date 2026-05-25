@@ -3,14 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sketch AI - النسخة النهائية المضمونة</title>
+    <title>Sketch AI - محول الرسومات الذكي</title>
     <style>
-        body { background: #121212; color: white; font-family: sans-serif; text-align: center; padding: 20px; }
-        .card { background: #1e1e1e; padding: 20px; border-radius: 15px; border: 1px solid #333; display: inline-block; max-width: 90%; }
-        canvas { background: white; border-radius: 10px; cursor: crosshair; touch-action: none; width: 400px; height: 400px; border: 3px solid #444; }
-        button { padding: 15px; border-radius: 8px; border: none; background: #00d2ff; color: black; font-weight: bold; cursor: pointer; margin: 5px; width: 100%; max-width: 200px; }
-        #resImg { width: 400px; height: 400px; border-radius: 10px; display: none; margin-top: 20px; border: 2px solid #00d2ff; }
-        input[type="text"] { width: 80%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; background: #000; color: white; text-align: center; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: white; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center; 
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        h1 { 
+            margin-bottom: 30px; 
+            font-size: 2.5rem;
+            text-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+        }
+        
+        .card { 
+            background: rgba(30, 30, 30, 0.9);
+            padding: 30px; 
+            border-radius: 15px; 
+            border: 2px solid #00d2ff;
+            display: inline-block; 
+            max-width: 95%;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.2);
+        }
+        
+        canvas { 
+            background: white; 
+            border-radius: 10px; 
+            cursor: crosshair; 
+            touch-action: none; 
+            width: 100%;
+            max-width: 400px;
+            height: 400px; 
+            border: 3px solid #00d2ff;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        button { 
+            padding: 15px 20px; 
+            border-radius: 8px; 
+            border: none; 
+            background: #00d2ff; 
+            color: black; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin: 8px auto; 
+            width: 90%;
+            max-width: 300px;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        
+        button:hover { 
+            background: #00b8d4;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3);
+        }
+        
+        button:active { transform: translateY(0); }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        #resImg { 
+            width: 100%;
+            max-width: 400px;
+            height: 400px; 
+            border-radius: 10px; 
+            display: none; 
+            margin-top: 20px; 
+            border: 2px solid #00d2ff;
+        }
+        
+        input[type="text"] { 
+            width: 90%;
+            max-width: 300px;
+            padding: 12px; 
+            margin: 10px auto; 
+            border-radius: 8px; 
+            border: 2px solid #00d2ff;
+            background: #000; 
+            color: white;
+            text-align: center;
+            font-size: 1rem;
+        }
+        
+        #st { 
+            color: #00d2ff; 
+            margin-top: 15px;
+            min-height: 20px;
+            font-size: 1.1rem;
+        }
+        
+        .status-loading { color: #ffa500; }
+        .status-success { color: #00ff00; }
+        .status-error { color: #ff4444; }
+        
+        hr { border-color: #333; margin: 20px 0; }
+        
+        @media (max-width: 480px) {
+            h1 { font-size: 1.8rem; }
+            canvas { height: 300px; }
+            #resImg { height: 300px; }
+        }
     </style>
 </head>
 <body>
@@ -18,76 +124,186 @@
 <h1>محول الرسومات الذكي ✨</h1>
 
 <div class="card">
-    <canvas id="c" width="512" height="512"></canvas>
+    <canvas id="myCanvas" width="512" height="512"></canvas>
     <br>
-    <button onclick="clearC()" style="background:#ff4444; color:white">مسح اللوحة</button>
-    <button onclick="document.getElementById('f').click()" style="background:#555; color:white">رفع سكتش 📁</button>
-    <input type="file" id="f" hidden accept="image/*">
+    <button onclick="clearCanvas()" style="background: #ff4444; color: white;">مسح اللوحة 🗑️</button>
+    <button onclick="document.getElementById('fileInput').click()" style="background: #555; color: white;">رفع سكتش 📁</button>
+    <input type="file" id="fileInput" hidden accept="image/*">
     
-    <hr style="border-color:#333; margin:20px 0;">
+    <hr>
     
-    <input type="text" id="p" placeholder="اكتب وصفاً للرسمة هنا...">
+    <input type="text" id="promptInput" placeholder="اكتب وصفاً للرسمة هنا..." maxlength="200">
     <br>
-    <button id="go" style="background:#00d2ff; width:90%; max-width:none; font-size:1.1rem;">تحويل الرسمة الآن 🚀</button>
+    <button id="convertBtn" style="background: #00d2ff; width: 95%; max-width: none; font-size: 1.1rem; margin: 15px auto;">تحويل الرسمة الآن 🚀</button>
     
-    <p id="st" style="color:#00d2ff; margin-top:10px;"></p>
-    <img id="resImg">
+    <p id="status" style="color: #00d2ff; margin-top: 10px;"></p>
+    <img id="resultImage" alt="الصورة المولّدة">
 </div>
 
 <script>
-    const c = document.getElementById('c'), ctx = c.getContext('2d');
-    const resImg = document.getElementById('resImg'), st = document.getElementById('st');
+    const canvas = document.getElementById('myCanvas');
+    const ctx = canvas.getContext('2d');
+    const resultImage = document.getElementById('resultImage');
+    const statusText = document.getElementById('status');
+    const convertBtn = document.getElementById('convertBtn');
 
     // إعداد اللوحة
-    ctx.fillStyle = "white"; ctx.fillRect(0,0,512,512);
-    ctx.strokeStyle = "black"; ctx.lineWidth = 6; ctx.lineCap = "round";
+    function initCanvas() {
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, 512, 512);
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 6;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+    }
 
-    let draw = false;
-    const getPos = (e) => {
-        const r = c.getBoundingClientRect();
+    initCanvas();
+
+    let isDrawing = false;
+
+    function getPosition(e) {
+        const rect = canvas.getBoundingClientRect();
         const clientX = e.clientX || (e.touches && e.touches[0].clientX);
         const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-        return { x: (clientX - r.left) * (c.width / r.width), y: (clientY - r.top) * (c.height / r.height) };
+        return {
+            x: (clientX - rect.left) * (canvas.width / rect.width),
+            y: (clientY - rect.top) * (canvas.height / rect.height)
+        };
+    }
+
+    // أحداث الماوس
+    canvas.addEventListener('mousedown', (e) => {
+        isDrawing = true;
+        ctx.beginPath();
+        const pos = getPosition(e);
+        ctx.moveTo(pos.x, pos.y);
+    });
+
+    window.addEventListener('mouseup', () => {
+        isDrawing = false;
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+        if (!isDrawing) return;
+        const pos = getPosition(e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+    });
+
+    // أحداث اللمس
+    canvas.addEventListener('touchstart', (e) => {
+        isDrawing = true;
+        ctx.beginPath();
+        const pos = getPosition(e);
+        ctx.moveTo(pos.x, pos.y);
+        e.preventDefault();
+    }, false);
+
+    canvas.addEventListener('touchend', () => {
+        isDrawing = false;
+    }, false);
+
+    canvas.addEventListener('touchmove', (e) => {
+        if (!isDrawing) return;
+        const pos = getPosition(e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+        e.preventDefault();
+    }, false);
+
+    // مسح اللوحة
+    window.clearCanvas = () => {
+        initCanvas();
+        resultImage.style.display = "none";
+        statusText.innerText = "";
     };
 
-    c.onmousedown = (e) => { draw = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); };
-    window.onmouseup = () => draw = false;
-    c.onmousemove = (e) => { if(!draw) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
+    // تحميل صورة
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
 
-    // دعم اللمس للموبايل
-    c.ontouchstart = (e) => { draw = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); e.preventDefault(); };
-    c.ontouchend = () => draw = false;
-    c.ontouchmove = (e) => { if(!draw) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); };
-
-    window.clearC = () => { ctx.fillStyle="white"; ctx.fillRect(0,0,512,512); resImg.style.display="none"; st.innerText=""; };
-
-    document.getElementById('f').onchange = (e) => {
         const reader = new FileReader();
         reader.onload = (ev) => {
             const img = new Image();
-            img.onload = () => ctx.drawImage(img,0,0,512,512);
+            img.onload = () => {
+                ctx.clearRect(0, 0, 512, 512);
+                ctx.drawImage(img, 0, 0, 512, 512);
+            };
+            img.onerror = () => {
+                setStatus("❌ خطأ في تحميل الصورة", "error");
+            };
             img.src = ev.target.result;
         };
-        reader.readAsDataURL(e.target.files[0]);
-    };
-
-  document.getElementById('go').onclick = () => {
-        const promptText = document.getElementById('p').value || "highly detailed architectural design";
-        st.innerText = "جاري التوليد... سيتم فتح الصورة في نافذة جديدة";
-        
-        const seed = Math.floor(Math.random() * 1000000);
-        // الرابط هنا مصمم ليتم فتحه كملف منفصل
-        const finalUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=512&height=512&seed=${seed}&nologo=true`;
-
-        // لا نحاول عرضها داخل الصفحة، سنفتحها مباشرة في نافذة جديدة لتجاوز الحماية
-        window.open(finalUrl, '_blank');
-        st.innerText = "✅ تم طلب الصورة، تحقق من النافذة الجديدة!";
-    }; 
-
-        resImg.onerror = () => {
-            st.innerHTML = `⚠️ المتصفح يحجب العرض المباشر. <br> <a href="${finalUrl}" target="_blank" style="color:#00d2ff; font-weight:bold; font-size:1.2rem;">اضغط هنا لفتح النتيجة في صفحة جديدة</a>`;
+        reader.onerror = () => {
+            setStatus("❌ خطأ في قراءة الملف", "error");
         };
-    };
+        reader.readAsDataURL(file);
+    });
+
+    function setStatus(message, type = "") {
+        statusText.innerText = message;
+        statusText.className = type ? `status-${type}` : "";
+    }
+
+    // تحويل الرسمة
+    convertBtn.addEventListener('click', () => {
+        const promptText = document.getElementById('promptInput').value.trim();
+
+        if (!promptText) {
+            setStatus("⚠️ يرجى إدخال وصف للرسمة", "error");
+            return;
+        }
+
+        setStatus("جاري التوليد... ⏳ (قد يستغرق دقيقة)", "loading");
+        convertBtn.disabled = true;
+
+        try {
+            const seed = Math.floor(Math.random() * 1000000);
+            const encodedPrompt = encodeURIComponent(promptText);
+            const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&seed=${seed}&nologo=true`;
+
+            // محاولة تحميل الصورة
+            const img = new Image();
+            
+            img.onload = () => {
+                resultImage.src = imageUrl;
+                resultImage.style.display = "block";
+                setStatus("✅ تم توليد الصورة بنجاح!", "success");
+                convertBtn.disabled = false;
+            };
+
+            img.onerror = () => {
+                // في حالة الفشل، افتح في نافذة جديدة
+                setStatus("⚠️ تم فتح الصورة في نافذة جديدة، قد تستغرق لحظات للتحميل", "loading");
+                window.open(imageUrl, '_blank');
+                convertBtn.disabled = false;
+            };
+
+            img.crossOrigin = "anonymous";
+            img.src = imageUrl;
+
+            // timeout بعد 15 ثانية
+            setTimeout(() => {
+                if (convertBtn.disabled && !resultImage.src) {
+                    convertBtn.disabled = false;
+                    setStatus("⏱️ انتهت المهلة الزمنية، تحقق من النافذة الجديدة أو حاول مجدداً", "error");
+                }
+            }, 15000);
+
+        } catch (error) {
+            setStatus("❌ حدث خطأ: " + error.message, "error");
+            convertBtn.disabled = false;
+        }
+    });
+
+    // تسجيل Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(err => {
+            console.log('Service Worker registration failed:', err);
+        });
+    }
 </script>
+
 </body>
 </html>
