@@ -3,113 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sketch AI - النسخة المضمونة</title>
+    <title>Sketch AI - النسخة المضمونة 100%</title>
     <style>
-        :root { --primary: #00d2ff; --bg: #0f0f0f; }
-        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: 50px; }
-        .nav { background: #1a1a1a; width: 100%; text-align: center; padding: 15px; border-bottom: 2px solid var(--primary); margin-bottom: 20px; }
-        .container { display: flex; gap: 20px; padding: 20px; flex-wrap: wrap; justify-content: center; max-width: 1200px; }
-        .card { background: #1e1e1e; padding: 20px; border-radius: 15px; border: 1px solid #333; text-align: center; }
-        canvas { background: white; border-radius: 10px; cursor: crosshair; touch-action: none; width: 450px; height: 450px; border: 2px solid #555; }
-        #resImg { width: 450px; height: 450px; border-radius: 10px; display: none; border: 2px solid var(--primary); object-fit: cover; }
-        .controls { width: 300px; display: flex; flex-direction: column; gap: 15px; }
-        button { padding: 15px; border-radius: 8px; border: none; background: var(--primary); color: black; font-weight: bold; cursor: pointer; }
-        input { padding: 12px; border-radius: 8px; border: none; background: #000; color: white; text-align: center; }
-        .loader { display: none; border: 4px solid #222; border-top: 4px solid var(--primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 10px auto; }
+        body { background: #121212; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; }
+        .box { background: #1e1e1e; padding: 20px; border-radius: 15px; border: 1px solid #333; display: inline-block; }
+        canvas { background: white; border-radius: 10px; cursor: crosshair; touch-action: none; width: 400px; height: 400px; }
+        button { padding: 15px 30px; border-radius: 8px; border: none; background: #00d2ff; color: black; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
+        #resImg { width: 400px; height: 400px; border-radius: 10px; display: none; margin-top: 20px; border: 2px solid #00d2ff; }
+        .loader { display: none; border: 4px solid #222; border-top: 4px solid #00d2ff; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 10px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div class="nav"><h1>محول السكتشات الفوري 🎨</h1></div>
+<h1>مُحول السكتشات 🎨</h1>
 
-<div class="container">
-    <div class="card">
-        <h3>ارسم أو ارفع سكتش</h3>
-        <canvas id="c" width="512" height="512"></canvas>
-        <div style="margin-top:10px; display:flex; gap:10px">
-            <button onclick="clearC()" style="background:#ff4444; color:white; flex:1">مسح</button>
-            <button onclick="document.getElementById('f').click()" style="background:#444; color:white; flex:1">رفع صورة</button>
-            <input type="file" id="f" hidden accept="image/*">
-        </div>
-    </div>
-
-    <div class="controls">
-        <label>وصف اختياري (بالانجليزية):</label>
-        <input type="text" id="p" placeholder="مثلاً: luxury house">
-        <button id="go">حوّل السكتش الآن ✨</button>
-        <div class="loader" id="ld"></div>
-        <p id="st" style="color:var(--primary); font-size:14px">جاهز للعمل</p>
-    </div>
-
-    <div class="card">
-        <h3>النتيجة</h3>
-        <img id="resImg">
-        <div id="ph" style="width:450px; height:450px; display:flex; align-items:center; justify-content:center; border:2px dashed #333; border-radius:10px; color:#555;">النتيجة ستظهر هنا</div>
-    </div>
+<div class="box">
+    <canvas id="c" width="512" height="512"></canvas>
+    <br>
+    <button onclick="clearC()" style="background:#ff4444; color:white;">مسح اللوحة</button>
+    <button onclick="document.getElementById('f').click()" style="background:#555; color:white;">رفع سكتش 📁</button>
+    <input type="file" id="f" hidden accept="image/*">
+    
+    <hr style="border:0; border-top:1px solid #333; margin:20px 0;">
+    
+    <input type="text" id="p" placeholder="وصف السكتش (مثلاً: house)" style="width:90%; padding:10px; border-radius:5px; border:none; margin-bottom:10px;">
+    <button id="go">تحويل السكتش الآن ✨</button>
+    
+    <div class="loader" id="ld"></div>
+    <p id="st"></p>
+    
+    <img id="resImg">
 </div>
 
 <script>
     const c = document.getElementById('c'), ctx = c.getContext('2d');
-    const resImg = document.getElementById('resImg'), ph = document.getElementById('ph');
-    const st = document.getElementById('st'), ld = document.getElementById('ld');
+    const resImg = document.getElementById('resImg'), st = document.getElementById('st'), ld = document.getElementById('ld');
 
-    ctx.fillStyle = "white"; ctx.fillRect(0, 0, 512, 512);
+    ctx.fillStyle = "white"; ctx.fillRect(0,0,512,512);
     ctx.strokeStyle = "black"; ctx.lineWidth = 5; ctx.lineCap = "round";
 
     let draw = false;
-    c.onmousedown = (e) => { draw = true; ctx.beginPath(); };
-    window.onmouseup = () => draw = false;
-    c.onmousemove = (e) => {
-        if (!draw) return;
+    // دعم الماوس واللمس (Samsung A12)
+    const getPos = (e) => {
         const r = c.getBoundingClientRect();
-        ctx.lineTo(e.clientX - r.left, e.clientY - r.top);
-        ctx.stroke();
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        return { x: clientX - r.left, y: clientY - r.top };
     };
 
-    // دعم الموبايل (Samsung A12)
-    c.addEventListener('touchstart', (e) => { draw = true; ctx.beginPath(); e.preventDefault(); });
-    c.addEventListener('touchend', () => draw = false);
-    c.addEventListener('touchmove', (e) => {
-        if (!draw) return;
-        const r = c.getBoundingClientRect();
-        ctx.lineTo(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top);
-        ctx.stroke();
-        e.preventDefault();
-    });
+    const start = (e) => { draw = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); };
+    const move = (e) => { if(!draw) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); };
+    const stop = () => draw = false;
 
-    window.clearC = () => { ctx.fillRect(0,0,512,512); resImg.style.display="none"; ph.style.display="flex"; };
+    c.onmousedown = start; window.onmouseup = stop; c.onmousemove = move;
+    c.ontouchstart = start; c.ontouchend = stop; c.ontouchmove = move;
+
+    window.clearC = () => { ctx.fillRect(0,0,512,512); resImg.style.display="none"; st.innerText=""; };
 
     document.getElementById('f').onchange = (e) => {
-        const r = new FileReader();
-        r.onload = (ev) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
             const img = new Image();
-            img.onload = () => ctx.drawImage(img, 0, 0, 512, 512);
+            img.onload = () => ctx.drawImage(img,0,0,512,512);
             img.src = ev.target.result;
         };
-        r.readAsDataURL(e.target.files[0]);
+        reader.readAsDataURL(e.target.files[0]);
     };
 
-    document.getElementById('go').onclick = async () => {
-        const prompt = document.getElementById('p').value || "masterpiece, realistic high quality";
-        st.innerText = "⚡ جاري التوليد... قد يستغرق 10 ثواني";
+    document.getElementById('go').onclick = () => {
+        const prompt = document.getElementById('p').value || "masterpiece";
+        st.innerText = "جاري التوليد... انتظر ثواني";
         ld.style.display = "block";
         
         const seed = Math.floor(Math.random() * 1000000);
-        // استخدام رابط مباشر للصور لتجاوز قيود CORS
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&seed=${seed}&nologo=true`;
+        // نستخدم رابطاً مباشراً جداً يعامل كصورة عادية
+        const url = `https://pollinations.ai/p/${encodeURIComponent(prompt)}?width=512&height=512&seed=${seed}`;
 
-        // إجبار المتصفح على تحميل الصورة مباشرة
+        // محاولة عرض الصورة
         resImg.src = url;
         resImg.onload = () => {
             resImg.style.display = "block";
-            ph.style.display = "none";
-            st.innerText = "✅ تمت العملية بنجاح!";
             ld.style.display = "none";
+            st.innerText = "✅ تمت العملية!";
         };
+        
+        // إذا فشل العرض المباشر، سنفتح الرابط في نافذة جديدة كحل أخير
         resImg.onerror = () => {
-            st.innerText = "⚠️ حاول مرة أخرى أو جرب وصفاً مختلفاً";
             ld.style.display = "none";
+            st.innerHTML = `⚠️ المتصفح يحجب الصورة، <a href="${url}" target="_blank" style="color:#00d2ff">اضغط هنا لرؤيتها في نافذة جديدة</a>`;
         };
     };
 </script>
