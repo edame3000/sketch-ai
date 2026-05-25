@@ -62,13 +62,13 @@
             font-size: 1rem;
         }
         
-        button:hover { 
+        button:hover:not(:disabled) { 
             background: #00b8d4;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3);
         }
         
-        button:active { transform: translateY(0); }
+        button:active:not(:disabled) { transform: translateY(0); }
         
         button:disabled {
             background: #666;
@@ -76,7 +76,7 @@
             opacity: 0.6;
         }
         
-        #resImg { 
+        #resultImage { 
             width: 100%;
             max-width: 400px;
             height: 400px; 
@@ -84,6 +84,7 @@
             display: none; 
             margin-top: 20px; 
             border: 2px solid #00d2ff;
+            object-fit: cover;
         }
         
         input[type="text"] { 
@@ -99,7 +100,7 @@
             font-size: 1rem;
         }
         
-        #st { 
+        #status { 
             color: #00d2ff; 
             margin-top: 15px;
             min-height: 20px;
@@ -111,11 +112,36 @@
         .status-error { color: #ff4444; }
         
         hr { border-color: #333; margin: 20px 0; }
+
+        .info-box {
+            background: rgba(102, 126, 234, 0.2);
+            border: 1px solid #00d2ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: #b0c4ff;
+        }
         
         @media (max-width: 480px) {
             h1 { font-size: 1.8rem; }
             canvas { height: 300px; }
-            #resImg { height: 300px; }
+            #resultImage { height: 300px; }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(0, 210, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #00d2ff;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -124,6 +150,10 @@
 <h1>محول الرسومات الذكي ✨</h1>
 
 <div class="card">
+    <div class="info-box">
+        ℹ️ رسم على اللوحة أو حمّل صورة، ثم أدخل وصفاً وسيتم توليد صورة محسّنة مجاناً بدون مفتاح API
+    </div>
+
     <canvas id="myCanvas" width="512" height="512"></canvas>
     <br>
     <button onclick="clearCanvas()" style="background: #ff4444; color: white;">مسح اللوحة 🗑️</button>
@@ -132,7 +162,7 @@
     
     <hr>
     
-    <input type="text" id="promptInput" placeholder="اكتب وصفاً للرسمة هنا..." maxlength="200">
+    <input type="text" id="promptInput" placeholder="اكتب وصفاً للرسمة أو للصورة هنا (مثال: حديقة جميلة)..." maxlength="200">
     <br>
     <button id="convertBtn" style="background: #00d2ff; width: 95%; max-width: none; font-size: 1.1rem; margin: 15px auto;">تحويل الرسمة الآن 🚀</button>
     
@@ -147,7 +177,6 @@
     const statusText = document.getElementById('status');
     const convertBtn = document.getElementById('convertBtn');
 
-    // إعداد اللوحة
     function initCanvas() {
         ctx.fillStyle = "white";
         ctx.fillRect(0, 0, 512, 512);
@@ -171,7 +200,6 @@
         };
     }
 
-    // أحداث الماوس
     canvas.addEventListener('mousedown', (e) => {
         isDrawing = true;
         ctx.beginPath();
@@ -190,7 +218,6 @@
         ctx.stroke();
     });
 
-    // أحداث اللمس
     canvas.addEventListener('touchstart', (e) => {
         isDrawing = true;
         ctx.beginPath();
@@ -211,14 +238,12 @@
         e.preventDefault();
     }, false);
 
-    // مسح اللوحة
     window.clearCanvas = () => {
         initCanvas();
         resultImage.style.display = "none";
         statusText.innerText = "";
     };
 
-    // تحميل صورة
     document.getElementById('fileInput').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -229,6 +254,7 @@
             img.onload = () => {
                 ctx.clearRect(0, 0, 512, 512);
                 ctx.drawImage(img, 0, 0, 512, 512);
+                setStatus("✅ تم تحميل الصورة بنجاح", "success");
             };
             img.onerror = () => {
                 setStatus("❌ خطأ في تحميل الصورة", "error");
@@ -242,11 +268,10 @@
     });
 
     function setStatus(message, type = "") {
-        statusText.innerText = message;
+        statusText.innerHTML = message;
         statusText.className = type ? `status-${type}` : "";
     }
 
-    // تحويل الرسمة
     convertBtn.addEventListener('click', () => {
         const promptText = document.getElementById('promptInput').value.trim();
 
@@ -255,16 +280,16 @@
             return;
         }
 
-        setStatus("جاري التوليد... ⏳ (قد يستغرق دقيقة)", "loading");
+        setStatus('<span class="spinner"></span>جاري توليد الصورة...', "loading");
         convertBtn.disabled = true;
 
         try {
             const seed = Math.floor(Math.random() * 1000000);
-            const encodedPrompt = encodeURIComponent(promptText);
-            const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&seed=${seed}&nologo=true`;
+            // استخدام API مجانية بدون مفتاح
+            const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=512&height=512&seed=${seed}&nologo=true`;
 
-            // محاولة تحميل الصورة
             const img = new Image();
+            img.crossOrigin = "anonymous";
             
             img.onload = () => {
                 resultImage.src = imageUrl;
@@ -274,22 +299,19 @@
             };
 
             img.onerror = () => {
-                // في حالة الفشل، افتح في نافذة جديدة
-                setStatus("⚠️ تم فتح الصورة في نافذة جديدة، قد تستغرق لحظات للتحميل", "loading");
+                setStatus("⚠️ تم فتح الصورة في نافذة جديدة", "success");
                 window.open(imageUrl, '_blank');
                 convertBtn.disabled = false;
             };
 
-            img.crossOrigin = "anonymous";
             img.src = imageUrl;
 
-            // timeout بعد 15 ثانية
             setTimeout(() => {
                 if (convertBtn.disabled && !resultImage.src) {
                     convertBtn.disabled = false;
                     setStatus("⏱️ انتهت المهلة الزمنية، تحقق من النافذة الجديدة أو حاول مجدداً", "error");
                 }
-            }, 15000);
+            }, 20000);
 
         } catch (error) {
             setStatus("❌ حدث خطأ: " + error.message, "error");
@@ -297,7 +319,6 @@
         }
     });
 
-    // تسجيل Service Worker
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').catch(err => {
             console.log('Service Worker registration failed:', err);
