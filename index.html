@@ -5,154 +5,147 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>المحول الاحترافي - رسم إلى واقع</title>
     <style>
-        :root { --accent: #00d2ff; --bg: #1a1a1a; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .app-card { background: #2a2a2a; padding: 25px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); max-width: 900px; width: 100%; }
-        .status-area { margin-bottom: 20px; padding: 15px; background: #333; border-radius: 10px; border-right: 5px solid var(--accent); }
-        .canvases { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
-        canvas, img { width: 100%; background: white; border-radius: 10px; border: 2px solid #444; }
-        .controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        .btn { padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-primary { background: var(--accent); color: #000; }
-        .btn-success { background: #00ff88; color: #000; }
-        .progress-bg { width: 100%; height: 8px; background: #444; border-radius: 4px; margin-top: 10px; overflow: hidden; display: none; }
-        #progressBar { width: 0%; height: 100%; background: var(--accent); transition: 0.2s; }
-        input[type="file"] { margin: 10px 0; color: #ccc; }
+        :root { --primary: #00d2ff; --dark: #1a1a1a; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .header { text-align: center; padding: 20px; background: linear-gradient(135deg, #111, #222); width: 100%; border-bottom: 2px solid var(--primary); }
+        .container { display: flex; gap: 20px; padding: 20px; flex-wrap: wrap; justify-content: center; max-width: 1200px; }
+        .canvas-card { background: #2a2a2a; padding: 15px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; }
+        canvas { background: white; border-radius: 10px; cursor: crosshair; touch-action: none; width: 512px; height: 512px; }
+        .controls { display: flex; flex-direction: column; gap: 15px; width: 300px; padding: 20px; }
+        input[type="text"] { padding: 12px; border-radius: 8px; border: none; background: #333; color: white; border: 1px solid #444; }
+        button { padding: 12px; border-radius: 8px; border: none; background: var(--primary); color: #000; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { transform: scale(1.05); filter: brightness(1.2); }
+        #progressContainer { width: 80%; background: #333; height: 10px; border-radius: 5px; margin: 20px; display: none; overflow: hidden; }
+        #progressBar { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
+        .status-text { font-size: 14px; color: var(--primary); margin-top: 5px; }
     </style>
 </head>
 <body>
 
-<div class="app-card">
-    <div class="status-area">
-        <div id="statusText">جاري تهيئة المتصفح...</div>
-        <div class="progress-bg" id="progressContainer"><div id="progressBar"></div></div>
+    <div class="header">
+        <h1>الذكاء الاصطناعي لتحويل الرسم إلى واقع</h1>
+        <p>ارسم فكرتك الهندسية وسأحولها لك لصورة واقعية</p>
     </div>
 
-    <input type="file" id="uploadImg" accept="image/*">
-    
-    <div class="canvases">
-        <div>
-            <small>ارسم هنا أو ارفع صورة</small>
-            <canvas id="mainCanvas" width="512" height="512"></canvas>
+    <div id="progressContainer">
+        <div id="progressBar"></div>
+        <center><div class="status-text" id="statusText">جاري تهيئة المتصفح...</div></center>
+    </div>
+
+    <div class="container">
+        <div class="canvas-card">
+            <h3 style="text-align:center">ارسم هنا أو ارفع صورة</h3>
+            <canvas id="inputCanvas" width="512" height="512"></canvas>
+            <div style="margin-top:10px; display:flex; gap:10px">
+                <button onclick="clearCanvas()" style="background:#ff4b2b; color:white">مسح اللوحة</button>
+                <input type="file" id="fileInput" accept="image/*" style="display:none">
+                <button onclick="document.getElementById('fileInput').click()">رفع صورة</button>
+            </div>
         </div>
-        <div>
-            <small>النتيجة الواقعية</small>
-            <img id="resultImg" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Result">
+
+        <div class="controls">
+            <label>وصف الصورة (بالانجليزية):</label>
+            <input type="text" id="promptInput" placeholder="مثلاً: Modern living room, realistic interior design">
+            <button id="generateBtn">تحويل الرسم إلى واقع ✨</button>
+            <div id="aiStatus" style="font-size:12px; color:#888; text-align:center"></div>
+        </div>
+
+        <div class="canvas-card">
+            <h3 style="text-align:center">النتيجة الواقعية</h3>
+            <canvas id="outputCanvas" width="512" height="512"></canvas>
+            <button id="downloadBtn" style="width:100%; margin-top:10px; background:#4CAF50; color:white; display:none">حفظ النتيجة</button>
         </div>
     </div>
 
-    <div class="controls">
-        <button class="btn btn-primary" id="generateBtn" disabled>تحويل إلى واقع ⚡</button>
-        <button class="btn" style="background:#ff4444; color:white;" onclick="clearCanvas()">مسح</button>
-    </div>
-</div>
+    <script type="module">
+        // استخدام مكتبة مستقرة ونسخة محددة
+        import { pipeline, RawImage } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
 
-<script type="module">
-    import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0';
+        const canvas = document.getElementById('inputCanvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const outCanvas = document.getElementById('outputCanvas');
+        const outCtx = outCanvas.getContext('2d');
+        const progressBar = document.getElementById('progressBar');
+        const statusText = document.getElementById('statusText');
+        const aiStatus = document.getElementById('aiStatus');
 
-    // إعدادات البيئة
-    env.allowRemoteModels = true;
-    env.useBrowserCache = true;
+        let isDrawing = false;
+        let pipe = null;
 
-    const canvas = document.getElementById('mainCanvas');
-    const ctx = canvas.getContext('2d');
-    const statusText = document.getElementById('statusText');
-    const progressBar = document.getElementById('progressBar');
-    const generateBtn = document.getElementById('generateBtn');
-    const uploadImg = document.getElementById('uploadImg');
-    const resultImg = document.getElementById('resultImg');
+        // --- أدوات الرسم (تعمل فوراً) ---
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 5;
+        ctx.lineCap = "round";
 
-    let pipe = null;
+        canvas.addEventListener('mousedown', () => isDrawing = true);
+        canvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', () => isDrawing = false);
 
-    // 1. تسجيل الـ Service Worker
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js');
-    }
-
-    // 2. تحميل النموذج السريع (LCM/Turbo)
-   async function initAI() {
-    try {
-        document.getElementById('progressContainer').style.display = 'block';
-        // تم تغيير النموذج إلى نسخة stable-diffusion-v1-5-onnx لأنها تدعم الوصول العام ومستقرة جداً
-        pipe = await pipeline('image-to-image', 'Xenova/stable-diffusion-v1-5-onnx', {
-            device: 'webgpu',
-            dtype: 'q4', // استخدام ضغط q4 لسرعة التحميل على أجهزة الكمبيوتر
-            progress_callback: (p) => {
-                if (p.status === 'progress') {
-                    progressBar.style.width = p.progress + '%';
-                    statusText.innerText = `جاري تحميل المحرك: ${Math.round(p.progress)}%`;
-                }
-            }
-        });
-        document.getElementById('progressContainer').style.display = 'none';
-        console.log("الذكاء الاصطناعي جاهز!");
-    } catch (error) {
-        console.error("فشل تشغيل المحرك:", error);
-        statusText.innerText = "خطأ في التحميل، تأكد من دعم متصفحك لـ WebGPU";
-    }
-}
-            });
-            statusText.innerText = "✅ المحرك جاهز للعمل (Offline)";
-            generateBtn.disabled = false;
-            document.getElementById('progressContainer').style.display = 'none';
-        } catch (e) {
-            statusText.innerText = "❌ خطأ: متصفحك لا يدعم WebGPU. استخدم Chrome.";
-            console.error(e);
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
         }
-    }
 
-    initAI();
-
-    // 3. نظام الرسم
-    let drawing = false;
-    canvas.onmousedown = () => drawing = true;
-    canvas.onmouseup = () => { drawing = false; ctx.beginPath(); };
-    canvas.onmousemove = (e) => {
-        if (!drawing) return;
-        ctx.lineWidth = 10;
-        ctx.lineCap = 'round';
-        ctx.strokeStyle = '#000';
-        const rect = canvas.getBoundingClientRect();
-        ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-        ctx.stroke();
-    };
-
-    // 4. رفع صورة
-    uploadImg.onchange = (e) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            const img = new Image();
-            img.onload = () => ctx.drawImage(img, 0, 0, 512, 512);
-            img.src = ev.target.result;
+        window.clearCanvas = () => {
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
         };
-        reader.readAsDataURL(e.target.files[0]);
-    };
 
-    // 5. عملية التوليد
-    generateBtn.onclick = async () => {
-        statusText.innerText = "🪄 جاري السحر... ثواني فقط";
-        generateBtn.disabled = true;
+        // --- تحميل محرك الذكاء الاصطناعي (النسخة المفتوحة) ---
+        async function initAI() {
+            try {
+                document.getElementById('progressContainer').style.display = 'block';
+                aiStatus.innerText = "جاري الاتصال بالمحرك العالمي...";
+                
+                // تم استبدال النموذج لنسخة مفتوحة لا تتطلب 401
+                pipe = await pipeline('image-to-image', 'Xenova/stable-diffusion-v1-5-onnx', {
+                    device: 'webgpu',
+                    dtype: 'q4',
+                    progress_callback: (p) => {
+                        if (p.status === 'progress') {
+                            progressBar.style.width = p.progress + '%';
+                            statusText.innerText = `جاري تحميل عقل الـ AI: ${Math.round(p.progress)}%`;
+                        }
+                    }
+                });
 
-        // استخراج الصورة من الكانفاس
-        const imageData = canvas.toDataURL('image/png');
-        
-        try {
-            const output = await pipe(imageData, {
-                prompt: "ultra realistic, high definition, masterpiece, 8k",
-                num_inference_steps: 2,
-                strength: 0.8, // درجة الالتزام بالرسمة (0.1 حرية كاملة، 0.9 التزام بالخطوط)
+                aiStatus.innerText = "✅ المحرك جاهز للعمل";
+                document.getElementById('progressContainer').style.display = 'none';
+            } catch (err) {
+                console.error(err);
+                aiStatus.innerText = "⚠️ خطأ: تأكد من استخدام متصفح Chrome وتحديث كرت الشاشة";
+                statusText.innerText = "فشل التحميل";
+            }
+        }
+
+        // --- عملية التحويل ---
+        document.getElementById('generateBtn').onclick = async () => {
+            if (!pipe) return alert("يرجى الانتظار حتى ينتهي التحميل");
+            
+            const prompt = document.getElementById('promptInput').value || "high quality architectural render";
+            aiStatus.innerText = "جاري التحويل... اترك الماوس";
+            
+            const imgData = canvas.toDataURL('image/png');
+            const result = await pipe(imgData, prompt, {
+                strength: 0.7,
+                num_inference_steps: 4, // سريع جداً
             });
 
-            resultImg.src = output.toDataURL();
-            statusText.innerText = "✅ تم التحويل!";
-        } catch (err) {
-            console.error(err);
-            statusText.innerText = "❌ حدث خطأ أثناء التوليد";
-        }
-        generateBtn.disabled = false;
-    };
+            const outputImg = await result[0].toCanvas();
+            outCtx.drawImage(outputImg, 0, 0, 512, 512);
+            document.getElementById('downloadBtn').style.display = 'block';
+            aiStatus.innerText = "✅ اكتمل التحويل!";
+        };
 
-    window.clearCanvas = () => ctx.clearRect(0, 0, 512, 512);
-</script>
+        // تشغيل التحميل عند فتح الصفحة
+        initAI();
+    </script>
 </body>
 </html>
