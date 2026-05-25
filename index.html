@@ -96,27 +96,21 @@
         ld.style.display = "block";
         
         const seed = Math.floor(Math.random() * 1000000);
-        // استخدام رابط بديل ومستقر جداً
+        // استخدام رابط مباشر للصور لتجاوز قيود CORS
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&seed=${seed}&nologo=true`;
 
-        const tempImg = new Image();
-        tempImg.crossOrigin = "anonymous";
-        tempImg.onload = () => {
-            resImg.src = url;
+        // إجبار المتصفح على تحميل الصورة مباشرة
+        resImg.src = url;
+        resImg.onload = () => {
             resImg.style.display = "block";
             ph.style.display = "none";
             st.innerText = "✅ تمت العملية بنجاح!";
             ld.style.display = "none";
         };
-        tempImg.onerror = () => {
-            // محاولة أخيرة برابط طوارئ في حال فشل الأول
-            resImg.src = url;
-            resImg.style.display = "block";
-            ph.style.display = "none";
-            st.innerText = "✅ جاري العرض...";
+        resImg.onerror = () => {
+            st.innerText = "⚠️ حاول مرة أخرى أو جرب وصفاً مختلفاً";
             ld.style.display = "none";
         };
-        tempImg.src = url;
     };
 </script>
 </body>
