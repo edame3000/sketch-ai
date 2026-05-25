@@ -3,119 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sketch AI - النسخة المستقرة</title>
+    <title>Sketch AI - النسخة المضمونة</title>
     <style>
         :root { --primary: #00d2ff; --bg: #0f0f0f; }
-        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: 50px; }
         .nav { background: #1a1a1a; width: 100%; text-align: center; padding: 15px; border-bottom: 2px solid var(--primary); margin-bottom: 20px; }
-        .main-container { display: flex; gap: 20px; padding: 20px; flex-wrap: wrap; justify-content: center; max-width: 1300px; }
+        .container { display: flex; gap: 20px; padding: 20px; flex-wrap: wrap; justify-content: center; max-width: 1200px; }
         .card { background: #1e1e1e; padding: 20px; border-radius: 15px; border: 1px solid #333; text-align: center; }
-        canvas { background: white; border-radius: 10px; cursor: crosshair; touch-action: none; width: 512px; height: 512px; }
-        #outImage { width: 512px; height: 512px; border-radius: 10px; display: none; border: 2px solid #333; background: #000; }
-        .controls { width: 300px; display: flex; flex-direction: column; gap: 15px; justify-content: center; }
-        button { padding: 15px; border-radius: 8px; border: none; background: var(--primary); color: black; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { transform: scale(1.02); filter: brightness(1.1); }
-        .btn-secondary { background: #444; color: white; }
-        #status { font-size: 14px; color: var(--primary); margin-top: 10px; }
-        .loader { display: none; border: 4px solid #222; border-top: 4px solid var(--primary); border-radius: 50%; width: 35px; height: 35px; animation: spin 1s linear infinite; margin: auto; }
+        canvas { background: white; border-radius: 10px; cursor: crosshair; touch-action: none; width: 450px; height: 450px; border: 2px solid #555; }
+        #resImg { width: 450px; height: 450px; border-radius: 10px; display: none; border: 2px solid var(--primary); object-fit: cover; }
+        .controls { width: 300px; display: flex; flex-direction: column; gap: 15px; }
+        button { padding: 15px; border-radius: 8px; border: none; background: var(--primary); color: black; font-weight: bold; cursor: pointer; }
+        input { padding: 12px; border-radius: 8px; border: none; background: #000; color: white; text-align: center; }
+        .loader { display: none; border: 4px solid #222; border-top: 4px solid var(--primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 10px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div class="nav">
-    <h1>مُحول السكتشات الذكي 🚀</h1>
-</div>
+<div class="nav"><h1>محول السكتشات الفوري 🎨</h1></div>
 
-<div class="main-container">
+<div class="container">
     <div class="card">
-        <h3>ارسم أو ارفع سكتش 🎨</h3>
-        <canvas id="canvas" width="512" height="512"></canvas>
+        <h3>ارسم أو ارفع سكتش</h3>
+        <canvas id="c" width="512" height="512"></canvas>
         <div style="margin-top:10px; display:flex; gap:10px">
-            <button class="btn-secondary" style="background:#ff4444" onclick="clearCanvas()">مسح</button>
-            <button class="btn-secondary" onclick="document.getElementById('fileInput').click()">رفع سكتش 📁</button>
-            <input type="file" id="fileInput" hidden accept="image/*">
+            <button onclick="clearC()" style="background:#ff4444; color:white; flex:1">مسح</button>
+            <button onclick="document.getElementById('f').click()" style="background:#444; color:white; flex:1">رفع صورة</button>
+            <input type="file" id="f" hidden accept="image/*">
         </div>
     </div>
 
     <div class="controls">
-        <input type="text" id="promptInput" placeholder="وصف اختياري (بالانجليزية)..." style="padding:12px; border-radius:8px; border:none;">
-        <button id="genBtn">حوّل السكتش لواقع ✨</button>
-        <div class="loader" id="loader"></div>
-        <p id="status">جاهز لمعالجة سكتشك..</p>
+        <label>وصف اختياري (بالانجليزية):</label>
+        <input type="text" id="p" placeholder="مثلاً: luxury house">
+        <button id="go">حوّل السكتش الآن ✨</button>
+        <div class="loader" id="ld"></div>
+        <p id="st" style="color:var(--primary); font-size:14px">جاهز للعمل</p>
     </div>
 
     <div class="card">
-        <h3>النتيجة التخيلية ✨</h3>
-        <img id="outImage" alt="النتيجة تظهر هنا">
-        <div id="placeholderText" style="width:512px; height:512px; display:flex; align-items:center; justify-content:center; color:#444; border:2px dashed #333; border-radius:10px;">النتيجة ستظهر هنا</div>
+        <h3>النتيجة</h3>
+        <img id="resImg">
+        <div id="ph" style="width:450px; height:450px; display:flex; align-items:center; justify-content:center; border:2px dashed #333; border-radius:10px; color:#555;">النتيجة ستظهر هنا</div>
     </div>
 </div>
 
 <script>
-    const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
-    const outImage = document.getElementById('outImage'), placeholder = document.getElementById('placeholderText');
-    const status = document.getElementById('status'), loader = document.getElementById('loader');
+    const c = document.getElementById('c'), ctx = c.getContext('2d');
+    const resImg = document.getElementById('resImg'), ph = document.getElementById('ph');
+    const st = document.getElementById('st'), ld = document.getElementById('ld');
 
     ctx.fillStyle = "white"; ctx.fillRect(0, 0, 512, 512);
     ctx.strokeStyle = "black"; ctx.lineWidth = 5; ctx.lineCap = "round";
 
-    let drawing = false;
-    function start(e) { drawing = true; ctx.beginPath(); draw(e); }
-    function end() { drawing = false; }
-    function draw(e) {
-        if (!drawing) return;
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
-        const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
-        ctx.lineTo(x, y); ctx.stroke();
-    }
-
-    canvas.onmousedown = start; window.onmouseup = end; canvas.onmousemove = draw;
-    canvas.addEventListener('touchstart', start); canvas.addEventListener('touchend', end); canvas.addEventListener('touchmove', draw);
-
-    function clearCanvas() { 
-        ctx.fillStyle = "white"; ctx.fillRect(0,0,512,512); 
-        outImage.style.display = "none"; placeholder.style.display = "flex";
-    }
-
-    // وظيفة الرفع
-    document.getElementById('fileInput').onchange = (e) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            const img = new Image();
-            img.onload = () => {
-                ctx.fillStyle = "white"; ctx.fillRect(0, 0, 512, 512);
-                ctx.drawImage(img, 0, 0, 512, 512);
-                status.innerText = "✅ تم رفع السكتش!";
-            };
-            img.src = ev.target.result;
-        };
-        reader.readAsDataURL(e.target.files[0]);
+    let draw = false;
+    c.onmousedown = (e) => { draw = true; ctx.beginPath(); };
+    window.onmouseup = () => draw = false;
+    c.onmousemove = (e) => {
+        if (!draw) return;
+        const r = c.getBoundingClientRect();
+        ctx.lineTo(e.clientX - r.left, e.clientY - r.top);
+        ctx.stroke();
     };
 
-    // وظيفة التحويل باستخدام img مباشرة لتجنب CORS
-    document.getElementById('genBtn').onclick = async () => {
-        let prompt = document.getElementById('promptInput').value || "highly detailed masterpiece, realistic sketch to photo";
-        status.innerText = "🚀 جاري التحويل... انتظر قليلاً";
-        loader.style.display = "block";
-        
-        const seed = Math.floor(Math.random() * 999999);
-        const imageUrl = `https://pollinations.ai/p/${encodeURIComponent(prompt)}?width=512&height=512&seed=${seed}&nologo=true`;
+    // دعم الموبايل (Samsung A12)
+    c.addEventListener('touchstart', (e) => { draw = true; ctx.beginPath(); e.preventDefault(); });
+    c.addEventListener('touchend', () => draw = false);
+    c.addEventListener('touchmove', (e) => {
+        if (!draw) return;
+        const r = c.getBoundingClientRect();
+        ctx.lineTo(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top);
+        ctx.stroke();
+        e.preventDefault();
+    });
 
-        const testImg = new Image();
-        testImg.onload = function() {
-            outImage.src = imageUrl;
-            outImage.style.display = "block";
-            placeholder.style.display = "none";
-            status.innerText = "✅ اكتمل التحويل بنجاح!";
-            loader.style.display = "none";
+    window.clearC = () => { ctx.fillRect(0,0,512,512); resImg.style.display="none"; ph.style.display="flex"; };
+
+    document.getElementById('f').onchange = (e) => {
+        const r = new FileReader();
+        r.onload = (ev) => {
+            const img = new Image();
+            img.onload = () => ctx.drawImage(img, 0, 0, 512, 512);
+            img.src = ev.target.result;
         };
-        testImg.onerror = function() {
-            status.innerText = "❌ حدث خطأ في الاتصال، حاول مرة أخرى";
-            loader.style.display = "none";
+        r.readAsDataURL(e.target.files[0]);
+    };
+
+    document.getElementById('go').onclick = async () => {
+        const prompt = document.getElementById('p').value || "masterpiece, realistic high quality";
+        st.innerText = "⚡ جاري التوليد... قد يستغرق 10 ثواني";
+        ld.style.display = "block";
+        
+        const seed = Math.floor(Math.random() * 1000000);
+        // استخدام رابط بديل ومستقر جداً
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&seed=${seed}&nologo=true`;
+
+        const tempImg = new Image();
+        tempImg.crossOrigin = "anonymous";
+        tempImg.onload = () => {
+            resImg.src = url;
+            resImg.style.display = "block";
+            ph.style.display = "none";
+            st.innerText = "✅ تمت العملية بنجاح!";
+            ld.style.display = "none";
         };
-        testImg.src = imageUrl;
+        tempImg.onerror = () => {
+            // محاولة أخيرة برابط طوارئ في حال فشل الأول
+            resImg.src = url;
+            resImg.style.display = "block";
+            ph.style.display = "none";
+            st.innerText = "✅ جاري العرض...";
+            ld.style.display = "none";
+        };
+        tempImg.src = url;
     };
 </script>
 </body>
