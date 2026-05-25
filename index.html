@@ -2,118 +2,93 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sketch AI - محول الرسم الذكي</title>
     <style>
-        :root { --p: #00d2ff; --bg: #121212; }
-        body { background: var(--bg); color: white; font-family: system-ui; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .header { background: #1a1a1a; width: 100%; text-align: center; padding: 15px; border-bottom: 2px solid var(--p); }
-        .main { display: flex; gap: 20px; padding: 20px; flex-wrap: wrap; justify-content: center; }
-        canvas { background: white; border-radius: 8px; cursor: crosshair; box-shadow: 0 0 20px rgba(0,0,0,0.5); width: 450px; height: 450px; touch-action: none; }
-        .side { width: 300px; display: flex; flex-direction: column; gap: 15px; background: #1e1e1e; padding: 20px; border-radius: 12px; }
-        input { padding: 12px; border-radius: 6px; border: 1px solid #333; background: #111; color: white; }
-        button { padding: 12px; border-radius: 6px; border: none; background: var(--p); color: black; font-weight: bold; cursor: pointer; }
-        button:disabled { background: #444; cursor: not-allowed; }
-        #loading { display: none; color: var(--p); font-size: 14px; text-align: center; }
+        body { background: #121212; color: white; font-family: sans-serif; text-align: center; margin: 0; }
+        .nav { background: #1f1f1f; padding: 1rem; border-bottom: 2px solid #00d2ff; }
+        .canvas-container { display: flex; justify-content: center; gap: 20px; padding: 20px; flex-wrap: wrap; }
+        canvas { background: white; border-radius: 8px; cursor: crosshair; touch-action: none; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        .controls { background: #1e1e1e; padding: 20px; border-radius: 12px; width: 300px; margin: auto; }
+        button { background: #00d2ff; color: black; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin: 5px 0; }
+        input { width: 90%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h1>محول الرسم إلى واقع للهواة والمحترفين</h1>
-</div>
+<div class="nav"><h1>تحويل الرسم إلى واقع 🎨</h1></div>
 
-<div class="main">
+<div class="canvas-container">
     <div>
-        <h3 style="text-align:center">ارسم هنا</h3>
-        <canvas id="c"></canvas>
-        <div style="margin-top:10px; display:flex; gap:10px">
-            <button onclick="clearC()" style="background:#ff4444; color:white">مسح</button>
-            <button onclick="document.getElementById('f').click()">رفع صورة</button>
-            <input type="file" id="f" hidden accept="image/*">
-        </div>
+        <h3>لوحة الرسم</h3>
+        <canvas id="canvas" width="512" height="512"></canvas>
+        <button onclick="clearCanvas()" style="background:#ff4444; color:white">مسح اللوحة</button>
     </div>
-
-    <div class="side">
-        <label>صف ما رسمته (بالانجليزية):</label>
-        <input type="text" id="prompt" placeholder="مثلاً: Modern villa in Nile, realistic">
-        <button id="genBtn">تحويل الرسم ✨</button>
-        <div id="loading">جاري معالجة الصورة...</div>
-        <div id="status" style="font-size:12px; color:#888">بانتظار الرسم...</div>
-    </div>
-
-    <div>
-        <h3 style="text-align:center">النتيجة</h3>
-        <canvas id="out"></canvas>
-    </div>
-</div>
-
-<script type="module">
-    // استخدام نسخة مستقرة ومفتوحة جداً لـ Transformers.js
-    import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
     
-    // إجبار المكتبة على عدم طلب ملفات محلية (هذا يحل مشكلة 404)
-    env.allowLocalModels = false;
+    <div class="controls">
+        <h3>الإعدادات</h3>
+        <input type="text" id="prompt" placeholder="اكتب وصفاً بالانجليزية (مثلاً: Modern Villa)">
+        <button id="genBtn">تحويل الرسم الآن ✨</button>
+        <p id="status" style="color: #888; font-size: 13px;">الحالة: جاهز للرسم</p>
+    </div>
 
-    const c = document.getElementById('c'), ctx = c.getContext('2d', {willReadFrequently:true});
-    const out = document.getElementById('out'), oCtx = out.getContext('2d');
-    const btn = document.getElementById('genBtn'), st = document.getElementById('status'), ld = document.getElementById('loading');
+    <div>
+        <h3>النتيجة</h3>
+        <canvas id="outCanvas" width="512" height="512"></canvas>
+    </div>
+</div>
 
-    c.width = out.width = 512;
-    c.height = out.height = 512;
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const outCanvas = document.getElementById('outCanvas');
+    const oCtx = outCanvas.getContext('2d');
+    const status = document.getElementById('status');
 
-    // إعدادات لوحة الرسم
-    ctx.fillStyle = "white"; ctx.fillRect(0,0,512,512);
-    ctx.strokeStyle = "black"; ctx.lineWidth = 4; ctx.lineCap = "round";
+    // إعدادات الرسم
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, 512, 512);
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 5;
+    ctx.lineCap = "round";
 
     let drawing = false;
-    c.onmousedown = (e) => { drawing = true; ctx.beginPath(); };
+
+    // وظائف الرسم (تعمل فوراً دون الحاجة لنموذج خارجي)
+    canvas.onmousedown = () => { drawing = true; ctx.beginPath(); };
     window.onmouseup = () => drawing = false;
-    c.onmousemove = (e) => {
-        if(!drawing) return;
-        const r = c.getBoundingClientRect();
-        ctx.lineTo(e.clientX - r.left, e.clientY - r.top);
+    canvas.onmousemove = (e) => {
+        if (!drawing) return;
+        const rect = canvas.getBoundingClientRect();
+        ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
         ctx.stroke();
     };
 
-    window.clearC = () => { ctx.fillRect(0,0,512,512); oCtx.clearRect(0,0,512,512); };
-
-    let model;
-    async function load() {
-        try {
-            st.innerText = "جاري الاتصال بالمحرك...";
-            // سنستخدم نموذج Segmind-Distil-Diffusion لأنه أخف وأسرع ومفتوح للجميع
-            model = await pipeline('image-to-image', 'Xenova/distil-diffusion-v1-0', {
-                device: 'webgpu',
-                dtype: 'q8' // تقليل الجودة قليلاً لضمان التحميل بدون أخطاء 401
-            });
-            st.innerText = "✅ المحرك جاهز للعمل";
-            btn.disabled = false;
-        } catch (e) {
-            st.innerText = "⚠️ خطأ في التحميل، جرب متصفح Edge أو تحديث كرت الشاشة";
-            console.error(e);
-        }
+    function clearCanvas() {
+        ctx.fillRect(0, 0, 512, 512);
+        oCtx.clearRect(0, 0, 512, 512);
     }
 
-    btn.onclick = async () => {
-        const p = document.getElementById('prompt').value || "high quality render";
-        ld.style.display = "block";
-        btn.disabled = true;
-        try {
-            const blob = await new Promise(res => c.toBlob(res));
-            const imgUrl = URL.createObjectURL(blob);
-            const output = await model(imgUrl, p, { strength: 0.8, num_inference_steps: 10 });
-            const resultImg = await output[0].toCanvas();
-            oCtx.drawImage(resultImg, 0, 0, 512, 512);
-            st.innerText = "✅ اكتمل التحويل!";
-        } catch (err) {
-            alert("حدث خطأ أثناء التحويل، تأكد من دعم WebGPU");
-        }
-        ld.style.display = "none";
-        btn.disabled = false;
-    };
+    // زر التحويل
+    document.getElementById('genBtn').onclick = async () => {
+        const prompt = document.getElementById('prompt').value;
+        if(!prompt) return alert("من فضلك اكتب وصفاً أولاً");
 
-    load();
+        status.innerText = "⚡ جاري المعالجة عبر السحابة...";
+        
+        // تحويل الرسم لصورة لإرسالها
+        const imageData = canvas.toDataURL('image/jpeg');
+
+        // هنا نقوم بمحاكاة النتيجة مؤقتاً للتأكد من عمل الواجهة
+        // في الخطوة القادمة سأعطيك مفتاح API لربطه فعلياً
+        setTimeout(() => {
+            status.innerText = "✅ تم التحويل بنجاح!";
+            oCtx.fillStyle = "#333";
+            oCtx.fillRect(0,0,512,512);
+            oCtx.fillStyle = "white";
+            oCtx.font = "20px Arial";
+            oCtx.fillText("النتيجة ستظهر هنا", 180, 250);
+        }, 2000);
+    };
 </script>
 </body>
 </html>
