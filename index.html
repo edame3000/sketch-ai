@@ -70,18 +70,27 @@
     }
 
     // 2. تحميل النموذج السريع (LCM/Turbo)
-    async function initAI() {
-        try {
-            document.getElementById('progressContainer').style.display = 'block';
-            pipe = await pipeline('image-to-image', 'Xenova/sd-turbo-onnx', {
-                device: 'webgpu',
-                dtype: 'q4',
-                progress_callback: (p) => {
-                    if (p.status === 'progress') {
-                        progressBar.style.width = p.progress + '%';
-                        statusText.innerText = `جاري تحميل المحرك: ${Math.round(p.progress)}%`;
-                    }
+   async function initAI() {
+    try {
+        document.getElementById('progressContainer').style.display = 'block';
+        // تم تغيير النموذج إلى نسخة stable-diffusion-v1-5-onnx لأنها تدعم الوصول العام ومستقرة جداً
+        pipe = await pipeline('image-to-image', 'Xenova/stable-diffusion-v1-5-onnx', {
+            device: 'webgpu',
+            dtype: 'q4', // استخدام ضغط q4 لسرعة التحميل على أجهزة الكمبيوتر
+            progress_callback: (p) => {
+                if (p.status === 'progress') {
+                    progressBar.style.width = p.progress + '%';
+                    statusText.innerText = `جاري تحميل المحرك: ${Math.round(p.progress)}%`;
                 }
+            }
+        });
+        document.getElementById('progressContainer').style.display = 'none';
+        console.log("الذكاء الاصطناعي جاهز!");
+    } catch (error) {
+        console.error("فشل تشغيل المحرك:", error);
+        statusText.innerText = "خطأ في التحميل، تأكد من دعم متصفحك لـ WebGPU";
+    }
+}
             });
             statusText.innerText = "✅ المحرك جاهز للعمل (Offline)";
             generateBtn.disabled = false;
