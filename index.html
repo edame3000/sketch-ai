@@ -71,21 +71,18 @@
         reader.readAsDataURL(e.target.files[0]);
     };
 
-    document.getElementById('go').onclick = () => {
-        const promptText = document.getElementById('p').value || "highly detailed masterpiece";
-        st.innerText = "⏳ جاري التوليد... انتظر 5 ثواني";
+  document.getElementById('go').onclick = () => {
+        const promptText = document.getElementById('p').value || "highly detailed architectural design";
+        st.innerText = "جاري التوليد... سيتم فتح الصورة في نافذة جديدة";
         
         const seed = Math.floor(Math.random() * 1000000);
-        // الرابط المباشر للصورة (وليس الصفحة الرئيسية)
+        // الرابط هنا مصمم ليتم فتحه كملف منفصل
         const finalUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=512&height=512&seed=${seed}&nologo=true`;
 
-        resImg.src = finalUrl;
-        resImg.style.display = "block";
-        
-        resImg.onload = () => {
-            st.innerText = "✅ اكتمل التحويل!";
-            window.scrollTo(0, document.body.scrollHeight);
-        };
+        // لا نحاول عرضها داخل الصفحة، سنفتحها مباشرة في نافذة جديدة لتجاوز الحماية
+        window.open(finalUrl, '_blank');
+        st.innerText = "✅ تم طلب الصورة، تحقق من النافذة الجديدة!";
+    }; 
 
         resImg.onerror = () => {
             st.innerHTML = `⚠️ المتصفح يحجب العرض المباشر. <br> <a href="${finalUrl}" target="_blank" style="color:#00d2ff; font-weight:bold; font-size:1.2rem;">اضغط هنا لفتح النتيجة في صفحة جديدة</a>`;
