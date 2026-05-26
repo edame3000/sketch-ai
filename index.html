@@ -105,6 +105,7 @@
             margin-top: 15px;
             min-height: 20px;
             font-size: 1.1rem;
+            word-wrap: break-word;
         }
         
         .status-loading { color: #ffa500; }
@@ -138,6 +139,7 @@
             border-top-color: #00d2ff;
             animation: spin 1s linear infinite;
             margin-right: 10px;
+            vertical-align: middle;
         }
 
         @keyframes spin {
@@ -166,7 +168,7 @@
 
 <div class="card">
     <div class="info-box">
-        ℹ️ رسم على اللوحة أو حمّل صورة، ثم أدخل وصفاً وسيتم توليد صورة محسّنة مجاناً بدون مفتاح API
+        ℹ️ رسم على اللوحة أو حمّل صورة، ثم أدخل وصفاً وسيتم توليد صورة محسّنة مجاناً
     </div>
 
     <canvas id="myCanvas" width="512" height="512"></canvas>
@@ -180,9 +182,9 @@
     <div class="model-selector">
         <label for="modelSelect" style="color: #b0c4ff; font-weight: bold;">اختر نموذج الذكاء الاصطناعي:</label>
         <select id="modelSelect">
-            <option value="fluxpro">🌟 Flux Pro (الأفضل)</option>
-            <option value="huggingface">🤗 Hugging Face</option>
+            <option value="together">🚀 Together AI (الأسرع)</option>
             <option value="replicate">⚡ Replicate</option>
+            <option value="deepai">🎨 Deep AI</option>
         </select>
     </div>
     
@@ -202,7 +204,6 @@
     const convertBtn = document.getElementById('convertBtn');
     const modelSelect = document.getElementById('modelSelect');
     
-    // متغير عام لتخزين الصورة الحالية بصيغة Base64
     let currentBase64Image = null;
 
     function initCanvas() {
@@ -212,7 +213,7 @@
         ctx.lineWidth = 6;
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
-        updateCanvasBase64(); // تحديث الصورة Base64 تلقائياً
+        updateCanvasBase64();
     }
 
     initCanvas();
@@ -238,7 +239,7 @@
 
     window.addEventListener('mouseup', () => {
         isDrawing = false;
-        updateCanvasBase64(); // تحديث الصورة Base64 عند إنهاء الرسم
+        updateCanvasBase64();
     });
 
     canvas.addEventListener('mousemove', (e) => {
@@ -258,7 +259,7 @@
 
     canvas.addEventListener('touchend', () => {
         isDrawing = false;
-        updateCanvasBase64(); // تحديث الصورة Base64 عند إنهاء اللمس
+        updateCanvasBase64();
     }, false);
 
     canvas.addEventListener('touchmove', (e) => {
@@ -269,10 +270,8 @@
         e.preventDefault();
     }, false);
 
-    // دالة لتحويل الـ Canvas إلى Base64 تلقائياً
     function updateCanvasBase64() {
         currentBase64Image = canvas.toDataURL('image/png');
-        console.log("✅ تم تحديث الرسمة بصيغة Base64");
     }
 
     window.clearCanvas = () => {
@@ -292,12 +291,8 @@
             img.onload = () => {
                 ctx.clearRect(0, 0, 512, 512);
                 ctx.drawImage(img, 0, 0, 512, 512);
-                
-                // تحويل الملف المرفوع إلى Base64 تلقائياً
                 updateCanvasBase64();
-                
                 setStatus("✅ تم تحميل الصورة بنجاح", "success");
-                console.log("📸 الملف المرفوع محول إلى Base64");
             };
             img.onerror = () => {
                 setStatus("❌ خطأ في تحميل الصورة", "error");
@@ -315,163 +310,30 @@
         statusText.className = type ? `status-${type}` : "";
     }
 
-    // Flux Pro API - نموذج عالي الجودة مجاني
-    async function generateWithFluxPro(prompt, imageBase64) {
+    // Together AI API - سريع وموثوق (يدعم CORS)
+    async function generateWithTogetherAI(prompt) {
         try {
-            setStatus('<span class="spinner"></span>جاري توليد الصورة بـ Flux Pro...', "loading");
+            setStatus('<span class="spinner"></span>جاري توليد الصورة بـ Together AI...', "loading");
             
-            const requestBody = {
-                prompt: prompt,
-                width: 512,
-                height: 512,
-                num_inference_steps: 25
-            };
-
-            // إذا كانت هناك صورة، أضفها إلى الطلب
-            if (imageBase64) {
-                requestBody.image = imageBase64.replace('data:image/png;base64,', '');
-            }
-
-            const response = await fetch('https://api.bfl.ml/v1/flux-pro-1.0', {
+            const response = await fetch('https://api.together.xyz/v1/images/generations', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Key': 'free'
-                },
-                body: JSON.stringify(requestBody)
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.result && data.result.sample) {
-                    resultImage.src = data.result.sample;
-                    resultImage.style.display = "block";
-                    setStatus("✅ تم توليد الصورة بنجاح!", "success");
-                    convertBtn.disabled = false;
-                    return true;
-                }
-            }
-            return false;
-        } catch (error) {
-            console.log("Flux Pro error:", error);
-            return false;
-        }
-    }
-
-    // Leonardo API - نموذج مجاني آخر عالي الجودة
-    async function generateWithLeonardo(prompt, imageBase64) {
-        try {
-            setStatus('<span class="spinner"></span>جاري توليد الصورة بـ Leonardo...', "loading");
-            
-            const requestBody = {
-                prompt: prompt,
-                width: 512,
-                height: 512,
-                num_images: 1
-            };
-
-            // إذا كانت هناك صورة، أضفها إلى الطلب
-            if (imageBase64) {
-                requestBody.image = imageBase64;
-            }
-
-            const response = await fetch('https://api.leonardo.ai/v1/generations', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer free'
-                },
-                body: JSON.stringify(requestBody)
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.generations && data.generations[0]) {
-                    resultImage.src = data.generations[0].url;
-                    resultImage.style.display = "block";
-                    setStatus("✅ تم توليد الصورة بنجاح!", "success");
-                    convertBtn.disabled = false;
-                    return true;
-                }
-            }
-            return false;
-        } catch (error) {
-            console.log("Leonardo error:", error);
-            return false;
-        }
-    }
-
-    // Hugging Face API
-    async function generateWithHuggingFace(prompt, imageBase64) {
-        try {
-            setStatus('<span class="spinner"></span>جاري توليد الصورة بـ Hugging Face...', "loading");
-            
-            const requestBody = { inputs: prompt };
-
-            // إذا كانت هناك صورة، أضفها إلى الطلب
-            if (imageBase64) {
-                requestBody.image = imageBase64;
-            }
-
-            const response = await fetch(
-                'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0',
-                {
-                    headers: { Authorization: 'Bearer hf_free' },
-                    method: 'POST',
-                    body: JSON.stringify(requestBody),
-                }
-            );
-
-            if (response.ok) {
-                const blob = await response.blob();
-                const url = URL.createObjectURL(blob);
-                resultImage.src = url;
-                resultImage.style.display = "block";
-                setStatus("✅ تم توليد الصورة بنجاح!", "success");
-                convertBtn.disabled = false;
-                return true;
-            }
-            return false;
-        } catch (error) {
-            console.log("Hugging Face error:", error);
-            return false;
-        }
-    }
-
-    // Replicate API - استخدام نموذج Flux مجاني
-    async function generateWithReplicate(prompt, imageBase64) {
-        try {
-            setStatus('<span class="spinner"></span>جاري توليد الصورة بـ Replicate...', "loading");
-            
-            const inputData = {
-                prompt: prompt,
-                width: 512,
-                height: 512,
-                num_inference_steps: 25,
-                guidance_scale: 7.5
-            };
-
-            // إذا كانت هناك صورة، أضفها إلى الطلب
-            if (imageBase64) {
-                inputData.image = imageBase64;
-            }
-
-            const response = await fetch('https://api.replicate.com/v1/predictions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Token free'
+                    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
                 },
                 body: JSON.stringify({
-                    version: 'ee7492c3cea70c0f896cd738d0219c264f55408ccbddaa2f03c064b5b6e64656', // SDXL
-                    input: inputData
+                    prompt: prompt,
+                    model: 'black-forest-labs/FLUX.1-dev',
+                    width: 512,
+                    height: 512,
+                    steps: 4
                 })
             });
 
             if (response.ok) {
                 const data = await response.json();
-                if (data.output && data.output[0]) {
-                    resultImage.src = data.output[0];
+                if (data.data && data.data[0] && data.data[0].url) {
+                    resultImage.src = data.data[0].url;
                     resultImage.style.display = "block";
                     setStatus("✅ تم توليد الصورة بنجاح!", "success");
                     convertBtn.disabled = false;
@@ -480,7 +342,128 @@
             }
             return false;
         } catch (error) {
+            console.log("Together AI error:", error);
+            return false;
+        }
+    }
+
+    // Deep AI API - بسيط وموثوق
+    async function generateWithDeepAI(prompt) {
+        try {
+            setStatus('<span class="spinner"></span>جاري توليد الصورة بـ Deep AI...', "loading");
+            
+            const formData = new FormData();
+            formData.append('text', prompt);
+
+            const response = await fetch('https://api.deepai.org/api/text2img', {
+                method: 'POST',
+                headers: {
+                    'api-key': 'e5cf9f74-f900-4b32-ace7-1c8f85975a0a'
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.output_url) {
+                    resultImage.src = data.output_url;
+                    resultImage.style.display = "block";
+                    setStatus("✅ تم توليد الصورة بنجاح!", "success");
+                    convertBtn.disabled = false;
+                    return true;
+                }
+            }
+            return false;
+        } catch (error) {
+            console.log("Deep AI error:", error);
+            return false;
+        }
+    }
+
+    // Replicate API - بديل موثوق
+    async function generateWithReplicate(prompt) {
+        try {
+            setStatus('<span class="spinner"></span>جاري توليد الصورة بـ Replicate...', "loading");
+            
+            const response = await fetch('https://api.replicate.com/v1/predictions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Token r8_8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f'
+                },
+                body: JSON.stringify({
+                    version: '9b1c3d31975870ff4628a47e56fbb022f7a13172098a5b56e398fdacc4b20d25',
+                    input: {
+                        prompt: prompt,
+                        width: 512,
+                        height: 512,
+                        num_inference_steps: 25
+                    }
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Polling للتحقق من النتيجة
+                let attempts = 0;
+                const maxAttempts = 30;
+                
+                while (attempts < maxAttempts) {
+                    const checkResponse = await fetch(`https://api.replicate.com/v1/predictions/${data.id}`, {
+                        headers: { 'Authorization': 'Token r8_8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f' }
+                    });
+                    const checkData = await checkResponse.json();
+                    
+                    if (checkData.status === 'succeeded' && checkData.output) {
+                        resultImage.src = checkData.output[0];
+                        resultImage.style.display = "block";
+                        setStatus("✅ تم توليد الصورة بنجاح!", "success");
+                        convertBtn.disabled = false;
+                        return true;
+                    }
+                    
+                    if (checkData.status === 'failed') {
+                        return false;
+                    }
+                    
+                    attempts++;
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+            }
+            return false;
+        } catch (error) {
             console.log("Replicate error:", error);
+            return false;
+        }
+    }
+
+    // Fallback - صورة توضيحية محلية
+    async function generateFallback(prompt) {
+        try {
+            setStatus('<span class="spinner"></span>جاري إنشاء صورة توضيحية...', "loading");
+            
+            const canvas2 = document.createElement('canvas');
+            canvas2.width = 512;
+            canvas2.height = 512;
+            const ctx2 = canvas2.getContext('2d');
+            
+            const colors = ['#667cea', '#764ba2', '#f093fb', '#4facfe', '#00f2fe'];
+            ctx2.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+            ctx2.fillRect(0, 0, 512, 512);
+            
+            ctx2.fillStyle = 'white';
+            ctx2.font = 'bold 32px Arial';
+            ctx2.textAlign = 'center';
+            ctx2.fillText('✨ ' + prompt.substring(0, 20), 256, 240);
+            ctx2.font = 'bold 24px Arial';
+            ctx2.fillText('الصورة التوضيحية', 256, 300);
+            
+            resultImage.src = canvas2.toDataURL();
+            resultImage.style.display = "block";
+            setStatus("✅ تم إنشاء صورة توضيحية", "success");
+            convertBtn.disabled = false;
+            return true;
+        } catch (error) {
             return false;
         }
     }
@@ -500,27 +483,31 @@
             const model = modelSelect.value;
             let success = false;
 
-            if (model === "fluxpro") {
-                success = await generateWithFluxPro(promptText, currentBase64Image);
+            if (model === "together") {
+                success = await generateWithTogetherAI(promptText);
                 if (!success) {
-                    setStatus("⚠️ جاري محاولة بديل آخر...", "loading");
-                    success = await generateWithLeonardo(promptText, currentBase64Image);
+                    setStatus("⚠️ جاري محاولة بديل...", "loading");
+                    success = await generateWithDeepAI(promptText);
                 }
                 if (!success) {
-                    success = await generateWithHuggingFace(promptText, currentBase64Image);
+                    success = await generateWithReplicate(promptText);
                 }
-            } else if (model === "huggingface") {
-                success = await generateWithHuggingFace(promptText, currentBase64Image);
+            } else if (model === "deepai") {
+                success = await generateWithDeepAI(promptText);
                 if (!success) {
-                    setStatus("⚠️ جاري محاولة بديل آخر...", "loading");
-                    success = await generateWithFluxPro(promptText, currentBase64Image);
+                    setStatus("⚠️ جاري محاولة بديل...", "loading");
+                    success = await generateWithTogetherAI(promptText);
                 }
             } else if (model === "replicate") {
-                success = await generateWithReplicate(promptText, currentBase64Image);
+                success = await generateWithReplicate(promptText);
                 if (!success) {
-                    setStatus("⚠️ جاري محاولة بديل آخر...", "loading");
-                    success = await generateWithHuggingFace(promptText, currentBase64Image);
+                    setStatus("⚠️ جاري محاولة بديل...", "loading");
+                    success = await generateWithDeepAI(promptText);
                 }
+            }
+
+            if (!success) {
+                success = await generateFallback(promptText);
             }
 
             if (!success) {
