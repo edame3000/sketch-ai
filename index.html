@@ -143,6 +143,21 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        .model-selector {
+            margin: 15px auto;
+        }
+
+        .model-selector select {
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid #00d2ff;
+            background: #000;
+            color: #00d2ff;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
     </style>
 </head>
 <body>
@@ -162,6 +177,14 @@
     
     <hr>
     
+    <div class="model-selector">
+        <label for="modelSelect" style="color: #b0c4ff; font-weight: bold;">اختر نموذج الذكاء الاصطناعي:</label>
+        <select id="modelSelect">
+            <option value="pollinations">Pollinations (الافتراضي)</option>
+            <option value="huggingface">Hugging Face (بديل مجاني)</option>
+        </select>
+    </div>
+    
     <input type="text" id="promptInput" placeholder="اكتب وصفاً للرسمة أو للصورة هنا (مثال: حديقة جميلة)..." maxlength="200">
     <br>
     <button id="convertBtn" style="background: #00d2ff; width: 95%; max-width: none; font-size: 1.1rem; margin: 15px auto;">تحويل الرسمة الآن 🚀</button>
@@ -176,6 +199,7 @@
     const resultImage = document.getElementById('resultImage');
     const statusText = document.getElementById('status');
     const convertBtn = document.getElementById('convertBtn');
+    const modelSelect = document.getElementById('modelSelect');
 
     function initCanvas() {
         ctx.fillStyle = "white";
@@ -272,7 +296,66 @@
         statusText.className = type ? `status-${type}` : "";
     }
 
-    convertBtn.addEventListener('click', () => {
+    async function generateWithHuggingFace(prompt) {
+        try {
+            // استخدام نموذج مجاني من Hugging Face
+            const response = await fetch(
+                `https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1`,
+                {
+                    headers: { Authorization: `Bearer hf_free` },
+                    method: "POST",
+                    body: JSON.stringify({ inputs: prompt }),
+                }
+            );
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                resultImage.src = url;
+                resultImage.style.display = "block";
+                setStatus("✅ تم توليد الصورة بنجاح!", "success");
+                convertBtn.disabled = false;
+                return true;
+            } else {
+                return false;
+            }
+        } catch (error) {
+            console.log("Hugging Face error:", error);
+            return false;
+        }
+    }
+
+    function generateWithPollinations(prompt) {
+        const seed = Math.floor(Math.random() * 1000000);
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&seed=${seed}&nologo=true`;
+
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        
+        img.onload = () => {
+            resultImage.src = imageUrl;
+            resultImage.style.display = "block";
+            setStatus("✅ تم توليد الصورة بنجاح!", "success");
+            convertBtn.disabled = false;
+        };
+
+        img.onerror = () => {
+            setStatus("⚠️ تم فتح الصورة في نافذة جديدة", "success");
+            window.open(imageUrl, '_blank');
+            convertBtn.disabled = false;
+        };
+
+        img.src = imageUrl;
+
+        setTimeout(() => {
+            if (convertBtn.disabled && !resultImage.src) {
+                convertBtn.disabled = false;
+                setStatus("⏱️ انتهت المهلة الزمنية، تحقق من النافذة الجديدة أو حاول مجدداً", "error");
+            }
+        }, 20000);
+    }
+
+    convertBtn.addEventListener('click', async () => {
         const promptText = document.getElementById('promptInput').value.trim();
 
         if (!promptText) {
@@ -284,35 +367,17 @@
         convertBtn.disabled = true;
 
         try {
-            const seed = Math.floor(Math.random() * 1000000);
-            // استخدام API مجانية بدون مفتاح
-            const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=512&height=512&seed=${seed}&nologo=true`;
+            const model = modelSelect.value;
 
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            
-            img.onload = () => {
-                resultImage.src = imageUrl;
-                resultImage.style.display = "block";
-                setStatus("✅ تم توليد الصورة بنجاح!", "success");
-                convertBtn.disabled = false;
-            };
-
-            img.onerror = () => {
-                setStatus("⚠️ تم فتح الصورة في نافذة جديدة", "success");
-                window.open(imageUrl, '_blank');
-                convertBtn.disabled = false;
-            };
-
-            img.src = imageUrl;
-
-            setTimeout(() => {
-                if (convertBtn.disabled && !resultImage.src) {
-                    convertBtn.disabled = false;
-                    setStatus("⏱️ انتهت المهلة الزمنية، تحقق من النافذة الجديدة أو حاول مجدداً", "error");
+            if (model === "huggingface") {
+                const success = await generateWithHuggingFace(promptText);
+                if (!success) {
+                    setStatus("⚠️ Hugging Face غير متاح، جاري استخدام Pollinations...", "loading");
+                    generateWithPollinations(promptText);
                 }
-            }, 20000);
-
+            } else {
+                generateWithPollinations(promptText);
+            }
         } catch (error) {
             setStatus("❌ حدث خطأ: " + error.message, "error");
             convertBtn.disabled = false;
